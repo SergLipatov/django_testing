@@ -1,8 +1,8 @@
-from http import HTTPStatus
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+
+from http import HTTPStatus
 
 from notes.models import Note
 
@@ -18,65 +18,69 @@ class TestRoutes(TestCase):
         cls.note = Note.objects.create(title='Заголовок', text='Текст',
                                        author=cls.author)
 
+    def check_url_status(self, user, urls, expected_status):
+        """Универсальная функция для проверки доступности страниц."""
+        if user:
+            self.client.force_login(user)
+        for name, args in urls:
+            with self.subTest(user=user, name=name):
+                url = reverse(name, args=args)
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, expected_status)
+
     def test_pages_availability(self):
-        urls = (
+        """Проверяет доступность страниц, доступных всем пользователям."""
+        public_urls = (
             ('notes:home', None),
             ('users:login', None),
             ('users:logout', None),
             ('users:signup', None),
         )
-        for name, args in urls:
-            with self.subTest(name=name):
-                url = reverse(name, args=args)
-                response = self.client.get(url)
-                self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.check_url_status(
+            user=None,
+            urls=public_urls,
+            expected_status=HTTPStatus.OK
+        )
 
     def test_availability_for_note_detail_edit_and_delete(self):
-        users_statuses = (
+        """Тест доступа к заметкам для автора и другого пользователя."""
+        note_urls = (
+            ('notes:edit', (self.note.slug,)),
+            ('notes:delete', (self.note.slug,)),
+            ('notes:detail', (self.note.slug,)),
+        )
+        user_status_pairs = (
             (self.author, HTTPStatus.OK),
             (self.reader, HTTPStatus.NOT_FOUND),
         )
-        for user, status in users_statuses:
-            # Логиним пользователя в клиенте:
-            self.client.force_login(user)
-            # Для каждой пары "пользователь - ожидаемый ответ"
-            # перебираем имена тестируемых страниц:
-            urls = (
-                ('notes:edit', (self.note.slug,)),
-                ('notes:delete', (self.note.slug,)),
-                ('notes:detail', (self.note.slug,)),
+        for user, status in user_status_pairs:
+            self.check_url_status(
+                user=user,
+                urls=note_urls,
+                expected_status=status
             )
-            for name, args in urls:
-                with self.subTest(user=user, name=name):
-                    url = reverse(name, args=args)
-                    response = self.client.get(url)
-                    self.assertEqual(response.status_code, status)
 
     def test_redirect_for_anonymous(self):
-        """Проверяет доступность страниц для неавторизованных пользователей."""
-        urls = (
+        """Проверяет редирект неавторизованных пользователей."""
+        protected_urls = (
             ('notes:add', None),
             ('notes:detail', (self.note.slug,)),
             ('notes:success', None),
-            ('notes:add', None),
             ('notes:edit', (self.note.slug,)),
             ('notes:delete', (self.note.slug,)),
             ('notes:list', None),
         )
         login_url = reverse('users:login')
-        for name, args in urls:
+        for name, args in protected_urls:
             with self.subTest(name=name):
                 url = reverse(name, args=args)
                 redirect_url = f'{login_url}?next={url}'
                 response = self.client.get(url)
                 self.assertRedirects(response, redirect_url)
 
-    def test_availability_for_note_list_add_danel(self):
-        users_statuses = (
-            (self.author, HTTPStatus.OK),
-            (self.reader, HTTPStatus.OK),
-        )
-        urls = (
+    def test_availability_for_auth_users(self):
+        """Тестирует доступность страниц для авторизованных пользователей."""
+        auth_urls = (
             ('notes:add', None),
             ('notes:list', None),
             ('notes:success', None),
@@ -84,13 +88,9 @@ class TestRoutes(TestCase):
             ('users:logout', None),
             ('users:signup', None),
         )
-        for user, status in users_statuses:
-            # Логиним пользователя в клиенте:
-            self.client.force_login(user)
-            # Для каждой пары "пользователь - ожидаемый ответ"
-            # перебираем имена тестируемых страниц:
-            for name, args in urls:
-                with self.subTest(user=user, name=name):
-                    url = reverse(name, args=args)
-                    response = self.client.get(url)
-                    self.assertEqual(response.status_code, status)
+        for user in (self.author, self.reader):
+            self.check_url_status(
+                user=user,
+                urls=auth_urls,
+                expected_status=HTTPStatus.OK
+            )

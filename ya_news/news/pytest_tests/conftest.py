@@ -1,26 +1,35 @@
-# conftest.py
 import pytest
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from news.models import News, Comment
+
 from datetime import datetime, timedelta
 
+from news.models import News, Comment
+
+User = get_user_model()
+
+NUM_TEST_COMMENTS = 5  # Количество тестовых комментариев
+
 
 @pytest.fixture
-def user(db):
+def user_factory(db):
+    """Фабрика пользователей."""
+    def create_user(**kwargs):
+        return User.objects.create(**kwargs)
+    return create_user
+
+
+@pytest.fixture
+def user(user_factory):
     """Создает обычного пользователя."""
-    return get_user_model().objects.create_user(
-        username="testuser",
-        password="password123"
-    )
+    return user_factory(username="testuser")
 
 
 @pytest.fixture
-def another_user(db):
+def another_user(user_factory):
     """Создает еще одного пользователя."""
-    return get_user_model().objects.create_user(
-        username="anotheruser",
-        password="password123"
-    )
+    return user_factory(username="anotheruser")
 
 
 @pytest.fixture
@@ -43,6 +52,7 @@ def news(db):
 @pytest.fixture
 def create_news(db):
     """Создаёт несколько новостей для проверки списка новостей."""
+    news_count = settings.NEWS_COUNT_ON_HOME_PAGE + 1  # Берем из настроек
     today = datetime.today().date()
     return News.objects.bulk_create([
         News(
@@ -50,7 +60,7 @@ def create_news(db):
             text="Текст",
             date=today - timedelta(days=i)
         )
-        for i in range(15)  # Создаём больше 10, чтобы проверить ограничение
+        for i in range(news_count)
     ])
 
 
@@ -69,7 +79,7 @@ def create_comments(db, user, news):
     """Создаёт несколько комментариев, чтобы проверить сортировку."""
     return Comment.objects.bulk_create([
         Comment(news=news, author=user, text=f"Комментарий {i}")
-        for i in range(5)  # Создаём 5 комментариев
+        for i in range(NUM_TEST_COMMENTS)
     ])
 
 
