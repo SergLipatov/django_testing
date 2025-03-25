@@ -1,55 +1,51 @@
 import pytest
-
-from django.urls import reverse
-
 from http import HTTPStatus
 
+pytestmark = pytest.mark.django_db
 
-@pytest.mark.django_db
+HOME_URL = pytest.lazy_fixture("home_url")
+DETAIL_URL = pytest.lazy_fixture("detail_url")
+EDIT_URL = pytest.lazy_fixture("edit_url")
+DELETE_URL = pytest.lazy_fixture("delete_url")
+LOGIN_URL = pytest.lazy_fixture("login_url")
+
+CLIENT_FIXTURE = pytest.lazy_fixture("client")
+AUTHOR_CLIENT_FIXTURE = pytest.lazy_fixture("author_client")
+ANOTHER_AUTHOR_CLIENT_FIXTURE = pytest.lazy_fixture("another_author_client")
+
+
 @pytest.mark.parametrize(
-    'name',
-    ('news:home', 'users:login', 'users:logout', 'users:signup')
+    "url, client_fixture, expected_status",
+    [
+        (HOME_URL, CLIENT_FIXTURE, HTTPStatus.OK),
+        (DETAIL_URL, CLIENT_FIXTURE, HTTPStatus.OK),
+        (EDIT_URL, AUTHOR_CLIENT_FIXTURE, HTTPStatus.OK),
+        (DELETE_URL, AUTHOR_CLIENT_FIXTURE, HTTPStatus.OK),
+    ]
 )
-def test_pages_availability_for_anonymous_user(client, name):
-    """Публичные страницы доступны анонимному пользователю."""
-    response = client.get(reverse(name))
-    assert response.status_code == HTTPStatus.OK
+def test_page_availability(url, client_fixture, expected_status):
+    """Проверяем доступность страниц для различных пользователей."""
+    response = client_fixture.get(url)
+    assert response.status_code == expected_status
 
 
-@pytest.mark.django_db
-def test_news_detail_page_availability(client, news):
-    """Страница отдельной новости доступна анонимному пользователю."""
-    response = client.get(reverse('news:detail', args=[news.pk]))
-    assert response.status_code == HTTPStatus.OK
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize('url_name', ['news:edit', 'news:delete'])
-def test_edit_delete_comment_availability_for_author(author_client, comment,
-                                                     url_name):
-    """Автор комментария может редактировать и удалять свой комментарий."""
-    response = author_client.get(reverse(url_name, args=[comment.pk]))
-    assert response.status_code == HTTPStatus.OK
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize('url_name', ['news:edit', 'news:delete'])
-def test_redirect_for_anonymous_user(client, comment, url_name):
-    """Анонимный пользователь перенаправляется на страницу логина."""
-    url = reverse(url_name, args=[comment.pk])
-    expected_url = reverse('users:login') + f'?next={url}'
+@pytest.mark.parametrize(
+    "url, expected_redirect",
+    [
+        (EDIT_URL, LOGIN_URL),
+        (DELETE_URL, LOGIN_URL),
+    ],
+)
+def test_redirect_for_anonymous_user(client, url, expected_redirect):
+    """Анонимный пользователь должен быть перенаправлен на страницу логина."""
     response = client.get(url)
-
     assert response.status_code == HTTPStatus.FOUND
-    assert response.url == expected_url
+    assert response.url == f"{expected_redirect}?next={url}"
 
 
-@pytest.mark.django_db
-@pytest.mark.parametrize('url_name', ['news:edit', 'news:delete'])
-def test_edit_delete_comment_forbidden_for_other_users(author_client, comment,
-                                                       another_user, url_name):
-    """Нельзя редактировать или удалять чужие комментарии."""
-    author_client.force_login(another_user)
-    response = author_client.get(reverse(url_name, args=[comment.pk]))
-
+@pytest.mark.parametrize("url", [EDIT_URL, DELETE_URL])
+def test_edit_delete_comment_forbidden_for_other_users(
+        another_author_client, url):
+    """Пользователь не может редактировать или удалять чужие комментарии."""
+    response = another_author_client.get(url)
     assert response.status_code == HTTPStatus.NOT_FOUND
