@@ -8,6 +8,8 @@ DETAIL_URL = pytest.lazy_fixture("detail_url")
 EDIT_URL = pytest.lazy_fixture("edit_url")
 DELETE_URL = pytest.lazy_fixture("delete_url")
 LOGIN_URL = pytest.lazy_fixture("login_url")
+LOGOUT_URL = pytest.lazy_fixture("logout_url")
+SIGNUP_URL = pytest.lazy_fixture("signup_url")
 
 CLIENT_FIXTURE = pytest.lazy_fixture("client")
 AUTHOR_CLIENT_FIXTURE = pytest.lazy_fixture("author_client")
@@ -49,3 +51,10 @@ def test_edit_delete_comment_forbidden_for_other_users(
     """Пользователь не может редактировать или удалять чужие комментарии."""
     response = another_author_client.get(url)
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.parametrize("url", [LOGIN_URL, LOGOUT_URL, SIGNUP_URL],)
+def test_auth_pages_availability_for_anonymous_user(client, url):
+    """Страницы входа, регистрации, выхода доступны анонимному пользователю."""
+    response = client.get(url)
+    assert response.status_code == HTTPStatus.OK

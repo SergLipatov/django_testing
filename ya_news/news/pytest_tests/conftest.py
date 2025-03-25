@@ -119,3 +119,15 @@ def delete_url(comment):
 def login_url():
     """URL для страницы логина."""
     return reverse('users:login')
+
+
+@pytest.fixture
+def logout_url():
+    """URL для страницы выхода."""
+    return reverse('users:logout')
+
+
+@pytest.fixture
+def signup_url():
+    """URL для страницы регистрации."""
+    return reverse('users:signup')
