@@ -23,10 +23,15 @@ ANOTHER_AUTHOR_CLIENT_FIXTURE = pytest.lazy_fixture("another_author_client")
         (DETAIL_URL, CLIENT_FIXTURE, HTTPStatus.OK),
         (EDIT_URL, AUTHOR_CLIENT_FIXTURE, HTTPStatus.OK),
         (DELETE_URL, AUTHOR_CLIENT_FIXTURE, HTTPStatus.OK),
-    ]
+        (EDIT_URL, ANOTHER_AUTHOR_CLIENT_FIXTURE, HTTPStatus.NOT_FOUND),
+        (DELETE_URL, ANOTHER_AUTHOR_CLIENT_FIXTURE, HTTPStatus.NOT_FOUND),
+        (LOGIN_URL, CLIENT_FIXTURE, HTTPStatus.OK),
+        (LOGOUT_URL, CLIENT_FIXTURE, HTTPStatus.OK),
+        (SIGNUP_URL, CLIENT_FIXTURE, HTTPStatus.OK),
+    ],
 )
 def test_page_availability(url, client_fixture, expected_status):
-    """Проверяем доступность страниц для различных пользователей."""
+    """Объединённый тест для проверки доступности страниц."""
     response = client_fixture.get(url)
     assert response.status_code == expected_status
 
@@ -43,18 +48,3 @@ def test_redirect_for_anonymous_user(client, url, expected_redirect):
     response = client.get(url)
     assert response.status_code == HTTPStatus.FOUND
     assert response.url == f"{expected_redirect}?next={url}"
-
-
-@pytest.mark.parametrize("url", [EDIT_URL, DELETE_URL])
-def test_edit_delete_comment_forbidden_for_other_users(
-        another_author_client, url):
-    """Пользователь не может редактировать или удалять чужие комментарии."""
-    response = another_author_client.get(url)
-    assert response.status_code == HTTPStatus.NOT_FOUND
-
-
-@pytest.mark.parametrize("url", [LOGIN_URL, LOGOUT_URL, SIGNUP_URL],)
-def test_auth_pages_availability_for_anonymous_user(client, url):
-    """Страницы входа, регистрации, выхода доступны анонимному пользователю."""
-    response = client.get(url)
-    assert response.status_code == HTTPStatus.OK
