@@ -1,40 +1,47 @@
 import pytest
 from http import HTTPStatus
 
-from news.models import Comment
 from news.forms import WARNING, BAD_WORDS
+from news.models import Comment
 
 pytestmark = pytest.mark.django_db
 
+UPDATED_COMMENT = {"text": "Обновленный комментарий"}
+UPDATEN_UNAUTHORIZED_COMMENT = {"text": "Новый несанкционированный текст"}
+COMMENT_DATA = [
+    {"bad_word": bad_word, "data": {
+        "text": f"Это {bad_word}!"}} for bad_word in BAD_WORDS
+]
 
-@pytest.mark.parametrize("bad_word", BAD_WORDS)
-def test_prohibited_words_in_comment(author_client, detail_url, bad_word):
+
+@pytest.mark.parametrize("comment_info", COMMENT_DATA)
+def test_prohibited_words_in_comment(author_client, detail_url, comment_info):
     """Проверяем, что тест на запрещённые слова работает корректно."""
-    data = {"text": f"Это {bad_word}!"}
-    response = author_client.post(detail_url, data=data)
+    response = author_client.post(detail_url, data=comment_info["data"])
     assert Comment.objects.count() == 0
     assert WARNING in response.context["form"].errors["text"]
 
 
 def test_user_can_edit_own_comment(author_client, comment, edit_url):
     """Авторизованный пользователь может редактировать свои комментарии."""
-    updated_data = {"text": "Обновленный комментарий"}
-    response = author_client.post(edit_url, data=updated_data)
+    response = author_client.post(edit_url, data=UPDATED_COMMENT)
     edited_comment = Comment.objects.get(pk=comment.pk)
 
-    assert edited_comment.text == updated_data["text"]
+    assert edited_comment.text == UPDATED_COMMENT["text"]
     assert edited_comment.author == comment.author
+    assert edited_comment.created == comment.created
     assert response.status_code == HTTPStatus.FOUND
 
 
 def test_user_cannot_edit_others_comment(another_author_client, comment,
                                          edit_url):
     """Пользователь не может редактировать чужие комментарии."""
-    updated_data = {"text": "Новый несанкционированный текст"}
-    response = another_author_client.post(edit_url, data=updated_data)
-
+    response = another_author_client.post(
+        edit_url,
+        data=UPDATEN_UNAUTHORIZED_COMMENT
+    )
     unchanged_comment = Comment.objects.get(pk=comment.pk)
-    assert unchanged_comment.text != updated_data["text"]
+    assert unchanged_comment.text != UPDATEN_UNAUTHORIZED_COMMENT["text"]
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 

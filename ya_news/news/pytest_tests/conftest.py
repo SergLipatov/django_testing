@@ -52,19 +52,17 @@ def news(db):
 
 @pytest.fixture
 def news_list(db):
-    """Создаёт список новостей."""
+    """Создаёт список новостей одним запросом в БД."""
     today = datetime.date.today()
-    news = []
 
-    for i in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1):
-        news_item = News.objects.create(
+    News.objects.bulk_create([
+        News(
             title=f"Новость {i}",
             text="Текст",
             date=today - datetime.timedelta(days=i)
         )
-        news.append(news_item)
-
-    return news
+        for i in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
+    ])
 
 
 @pytest.fixture
@@ -80,15 +78,14 @@ def comment(db, user, news):
 @pytest.fixture
 def comments(db, user, news):
     """Создаёт несколько комментариев с разными датами."""
-    comments = []
     for i in range(NUM_TEST_COMMENTS):
         created_date = datetime.datetime.now() - datetime.timedelta(days=i)
-        comment = Comment(news=news, author=user, text=f"Комментарий {i}")
-        comment.save()
-        Comment.objects.filter(id=comment.id).update(created=created_date)
-        comments.append(
-            Comment.objects.get(id=comment.id))
-    return comments
+        Comment.objects.create(
+            news=news,
+            author=user,
+            text=f"Комментарий {i}",
+            created=created_date
+        )
 
 
 @pytest.fixture

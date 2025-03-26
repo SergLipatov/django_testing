@@ -17,32 +17,27 @@ def test_news_count_on_homepage(client, home_url, news_list):
 def test_news_order(client, home_url):
     """Новости отсортированы по убыванию даты публикации."""
     response = client.get(home_url)
-    assert [news.date for news in response.context['object_list']] == sorted(
-        [news.date for news in response.context['object_list']], reverse=True
-    )
+    news_dates = [news.date for news in response.context['object_list']]
+    assert news_dates == sorted(news_dates, reverse=True)
 
 
 def test_comments_order(client, detail_url):
     """Комментарии отображаются в хронологическом порядке."""
     response = client.get(detail_url)
-    assert [
-           comment.created
-           for comment in response.context['news'].comment_set.all()
-           ] == sorted(
-        [
-            comment.created
-            for comment in response.context['news'].comment_set.all()
-        ]
-    )
+    comment_dates = [comment.created for comment in
+                     response.context['news'].comment_set.all()]
+    assert comment_dates == sorted(comment_dates)
 
 
 def test_anonymous_client_has_no_form(client, detail_url):
     """Анонимному пользователю недоступна форма добавления комментариев."""
     response = client.get(detail_url)
-    assert response.context.get('form') is None
+    assert 'form' not in response.context
 
 
 def test_authorized_client_has_form(author_client, detail_url):
     """Для авторизованного пользователя на странице доступна `CommentForm`"""
-    response = author_client.get(detail_url)
-    assert isinstance(response.context.get('form'), CommentForm)
+    assert isinstance(
+        author_client.get(detail_url).context.get('form'),
+        CommentForm
+    )
