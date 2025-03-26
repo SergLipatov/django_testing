@@ -1,7 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
+
+from .urls import get_redirect_url
 from notes.models import Note
-from .urls import detail_url, edit_url, delete_url
 
 User = get_user_model()
 
@@ -9,44 +11,50 @@ User = get_user_model()
 class BaseTestCase(TestCase):
     """Базовый тестовый класс с фикстурами и вспомогательными методами."""
 
-    NEW_NOTE_DATA = {
-        "title": "Новая заметка",
-        "text": "Какой-то текст",
-        "slug": "new-note"
-    }
-
-    EDIT_NOTE_DATA = {
-        "title": "Обновлённая заметка",
-        "text": "Обновлённый текст",
-    }
-
     @classmethod
     def setUpTestData(cls):
-        """Создаёт тестовых пользователей и их заметки."""
+        """Создаёт пользователей один раз на весь класс (экономит ресурсы)."""
         cls.author = User.objects.create(username="author")
-        cls.other_user = User.objects.create(username="other_user")
 
-        cls.author_note = Note.objects.create(
+    def setUp(self):
+        """Создаёт тестовые данные перед каждым тестом."""
+        self.author_client = self.client_class()
+        self.author_client.force_login(self.author)
+        self.anonymous_client = self.client_class()
+
+        self.author_note = Note.objects.create(
             title="Заметка автора",
             text="Текст 1",
-            author=cls.author,
+            author=self.author,
             slug="author-note"
         )
 
-        cls.other_user_note = Note.objects.create(
-            title="Заметка другого пользователя",
-            text="Текст 2",
-            author=cls.other_user,
-            slug="other-note"
+        self.author_edit_url = reverse(
+            "notes:edit",
+            args=[self.author_note.slug]
+        )
+        self.author_delete_url = reverse(
+            "notes:delete",
+            args=[self.author_note.slug]
+        )
+        self.author_detail_url = reverse(
+            "notes:detail",
+            args=[self.author_note.slug]
         )
 
-        cls.AUTHOR_DETAIL_URL = detail_url(cls.author_note.slug)
-        cls.AUTHOR_EDIT_URL = edit_url(cls.author_note.slug)
-        cls.AUTHOR_DELETE_URL = delete_url(cls.author_note.slug)
-        cls.OTHER_DETAIL_URL = detail_url(cls.other_user_note.slug)
-        cls.OTHER_EDIT_URL = edit_url(cls.other_user_note.slug)
-        cls.OTHER_DELETE_URL = delete_url(cls.other_user_note.slug)
+        self.redirect_author_edit_url = get_redirect_url(self.author_edit_url)
+        self.redirect_author_delete_url = get_redirect_url(
+            self.author_delete_url)
+        self.redirect_author_detail_url = get_redirect_url(
+            self.author_detail_url)
 
-    def login_author(self):
-        """Логинит пользователя-автора (self.author)."""
-        self.client.force_login(self.author)
+        self.new_note_data = {
+            "title": "Новая заметка",
+            "text": "Какой-то текст",
+            "slug": "new-note",
+        }
+
+        self.edit_note_data = {
+            "title": "Обновлённая заметка",
+            "text": "Обновлённый текст",
+        }

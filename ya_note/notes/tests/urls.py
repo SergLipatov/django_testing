@@ -10,13 +10,10 @@ LOGOUT_URL = reverse("users:logout")
 SIGNUP_URL = reverse("users:signup")
 
 
-def detail_url(slug):
-    return reverse("notes:detail", args=[slug])
+def get_redirect_url(destination_url):
+    return f"{LOGIN_URL}?next={destination_url}"
 
 
-def edit_url(slug):
-    return reverse("notes:edit", args=[slug])
-
-
-def delete_url(slug):
-    return reverse("notes:delete", args=[slug])
+REDIRECT_ADD_URL = get_redirect_url(ADD_URL)
+REDIRECT_LIST_URL = get_redirect_url(LIST_URL)
+REDIRECT_SUCCESS_URL = get_redirect_url(SUCCESS_URL)

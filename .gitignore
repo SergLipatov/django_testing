@@ -162,3 +162,7 @@ coverage.xml
 *.cover
 
 .vscode/
+/ya_news/requirements.txt
+/ya_news/.venv
+/ya_note/requirements.txt
+/ya_note/.venv

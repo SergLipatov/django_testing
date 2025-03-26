@@ -128,3 +128,21 @@ def logout_url():
 def signup_url():
     """URL для страницы регистрации."""
     return reverse('users:signup')
+
+
+@pytest.fixture
+def redirect_url(login_url):
+    """Формирует URL редиректа на страницу логина с параметром next."""
+    return lambda destination_url: f"{login_url}?next={destination_url}"
+
+
+@pytest.fixture
+def edit_redirect_url(redirect_url, edit_url):
+    """Редирект на логин при попытке редактировать комментарий."""
+    return redirect_url(edit_url)
+
+
+@pytest.fixture
+def delete_redirect_url(redirect_url, delete_url):
+    """Редирект на логин при попытке удалить комментарий."""
+    return redirect_url(delete_url)

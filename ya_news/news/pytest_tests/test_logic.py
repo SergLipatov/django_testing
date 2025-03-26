@@ -1,5 +1,6 @@
-import pytest
 from http import HTTPStatus
+
+import pytest
 
 from news.forms import WARNING, BAD_WORDS
 from news.models import Comment
@@ -7,7 +8,7 @@ from news.models import Comment
 pytestmark = pytest.mark.django_db
 
 UPDATED_COMMENT = {"text": "Обновленный комментарий"}
-UPDATEN_UNAUTHORIZED_COMMENT = {"text": "Новый несанкционированный текст"}
+UPDATED_UNAUTHORIZED_COMMENT = {"text": "Новый несанкционированный текст"}
 COMMENT_DATA = [
     {"bad_word": bad_word, "data": {
         "text": f"Это {bad_word}!"}} for bad_word in BAD_WORDS
@@ -38,10 +39,12 @@ def test_user_cannot_edit_others_comment(another_author_client, comment,
     """Пользователь не может редактировать чужие комментарии."""
     response = another_author_client.post(
         edit_url,
-        data=UPDATEN_UNAUTHORIZED_COMMENT
+        data=UPDATED_UNAUTHORIZED_COMMENT
     )
     unchanged_comment = Comment.objects.get(pk=comment.pk)
-    assert unchanged_comment.text != UPDATEN_UNAUTHORIZED_COMMENT["text"]
+    assert unchanged_comment.text == comment.text
+    assert unchanged_comment.author == comment.author
+    assert unchanged_comment.created == comment.created
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
@@ -58,4 +61,9 @@ def test_user_cannot_delete_others_comment(another_author_client, comment,
     response = another_author_client.post(delete_url)
 
     assert Comment.objects.filter(pk=comment.pk).count() == 1
+
+    unchanged_comment = Comment.objects.get(pk=comment.pk)
+    assert unchanged_comment.text == comment.text
+    assert unchanged_comment.author == comment.author
+    assert unchanged_comment.created == comment.created
     assert response.status_code == HTTPStatus.NOT_FOUND
