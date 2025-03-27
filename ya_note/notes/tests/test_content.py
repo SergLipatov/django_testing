@@ -10,14 +10,16 @@ class NoteContentTests(BaseTestCase):
         """Список заметок содержит только заметки текущего пользователя."""
         response = self.author_client.get(LIST_URL)
         notes = response.context["object_list"]
+        self.assertTrue(
+            all(note.author == self.author for note in notes),)
+        note = next((n for n in notes if n.slug == self.note_by_author.slug),
+                    None)
+        self.assertIsNotNone(note,)
+        self.assertEqual(note.title, self.note_by_author.title)
+        self.assertEqual(note.text, self.note_by_author.text)
+        self.assertEqual(note.slug, self.note_by_author.slug)
+        self.assertEqual(note.author, self.note_by_author.author)
 
-        self.assertIn(self.note_by_author, notes)
-
-        for note in notes:
-            self.assertEqual(note.author, self.author)
-            self.assertEqual(note.title, "Заметка автора")
-            self.assertEqual(note.text, "Текст 1")
-            self.assertEqual(note.slug, "author-note")
 
     def test_create_edit_pages_have_correct_forms(self):
         """На страницах создания и редактирования есть форма NoteForm."""

@@ -59,13 +59,9 @@ class BaseTestCase(TestCase):
             slug="reader-note"
         )
 
-        cls.new_note_data = {
+        cls.form_data = {
             "title": "Новая заметка",
             "text": "Какой-то текст",
             "slug": "new-note",
         }
 
-        cls.edit_note_data = {
-            "title": "Обновлённая заметка",
-            "text": "Обновлённый текст",
-        }
