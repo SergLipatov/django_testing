@@ -55,14 +55,14 @@ def news_list(db):
     """Создаёт список новостей одним запросом в БД."""
     today = datetime.date.today()
 
-    News.objects.bulk_create([
+    News.objects.bulk_create(
         News(
             title=f"Новость {i}",
             text="Текст",
             date=today - datetime.timedelta(days=i)
         )
         for i in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
-    ])
+    )
 
 
 @pytest.fixture
@@ -80,12 +80,14 @@ def comments(db, user, news):
     """Создаёт несколько комментариев с разными датами."""
     for i in range(NUM_TEST_COMMENTS):
         created_date = datetime.datetime.now() - datetime.timedelta(days=i)
-        Comment.objects.create(
+
+        comment = Comment.objects.create(
             news=news,
             author=user,
-            text=f"Комментарий {i}",
-            created=created_date
+            text=f"Комментарий {i}"
         )
+        comment.created = created_date
+        comment.save(update_fields=['created'])
 
 
 @pytest.fixture
@@ -131,18 +133,12 @@ def signup_url():
 
 
 @pytest.fixture
-def redirect_url(login_url):
-    """Формирует URL редиректа на страницу логина с параметром next."""
-    return lambda destination_url: f"{login_url}?next={destination_url}"
-
-
-@pytest.fixture
-def edit_redirect_url(redirect_url, edit_url):
+def edit_redirect_url(login_url, edit_url):
     """Редирект на логин при попытке редактировать комментарий."""
-    return redirect_url(edit_url)
+    return f"{login_url}?next={edit_url}"
 
 
 @pytest.fixture
-def delete_redirect_url(redirect_url, delete_url):
+def delete_redirect_url(login_url, delete_url):
     """Редирект на логин при попытке удалить комментарий."""
-    return redirect_url(delete_url)
+    return f"{login_url}?next={delete_url}"

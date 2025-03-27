@@ -21,32 +21,39 @@ ANOTHER_AUTHOR_CLIENT_FIXTURE = pytest.lazy_fixture("another_author_client")
 
 
 @pytest.mark.parametrize(
-    "url, client_fixture, expected_status, expected_redirect",
+    "url, client_fixture, expected_status",
     [
-        (HOME_URL, CLIENT_FIXTURE, HTTPStatus.OK, None),
-        (DETAIL_URL, CLIENT_FIXTURE, HTTPStatus.OK, None),
-        (LOGIN_URL, CLIENT_FIXTURE, HTTPStatus.OK, None),
-        (LOGOUT_URL, CLIENT_FIXTURE, HTTPStatus.OK, None),
-        (SIGNUP_URL, CLIENT_FIXTURE, HTTPStatus.OK, None),
+        (HOME_URL, CLIENT_FIXTURE, HTTPStatus.OK),
+        (DETAIL_URL, CLIENT_FIXTURE, HTTPStatus.OK),
+        (LOGIN_URL, CLIENT_FIXTURE, HTTPStatus.OK),
+        (LOGOUT_URL, CLIENT_FIXTURE, HTTPStatus.OK),
+        (SIGNUP_URL, CLIENT_FIXTURE, HTTPStatus.OK),
 
-        (EDIT_URL, AUTHOR_CLIENT_FIXTURE, HTTPStatus.OK, None),
-        (DELETE_URL, AUTHOR_CLIENT_FIXTURE, HTTPStatus.OK, None),
+        (EDIT_URL, AUTHOR_CLIENT_FIXTURE, HTTPStatus.OK),
+        (DELETE_URL, AUTHOR_CLIENT_FIXTURE, HTTPStatus.OK),
 
-        (EDIT_URL, ANOTHER_AUTHOR_CLIENT_FIXTURE, HTTPStatus.NOT_FOUND, None),
-        (DELETE_URL, ANOTHER_AUTHOR_CLIENT_FIXTURE,
-         HTTPStatus.NOT_FOUND, None),
+        (EDIT_URL, ANOTHER_AUTHOR_CLIENT_FIXTURE, HTTPStatus.NOT_FOUND),
+        (DELETE_URL, ANOTHER_AUTHOR_CLIENT_FIXTURE, HTTPStatus.NOT_FOUND),
 
-        (EDIT_URL, CLIENT_FIXTURE, HTTPStatus.FOUND, EDIT_REDIRECT_URL),
-        (DELETE_URL, CLIENT_FIXTURE, HTTPStatus.FOUND, DELETE_REDIRECT_URL),
+        (EDIT_URL, CLIENT_FIXTURE, HTTPStatus.FOUND),
+        (DELETE_URL, CLIENT_FIXTURE, HTTPStatus.FOUND),
     ],
 )
-def test_page_availability(url, client_fixture, expected_status,
-                           expected_redirect):
-    """Объединённый тест для проверки доступности страниц и редиректов."""
+def test_page_availability(url, client_fixture, expected_status):
+    """Тест для проверки статуса ответа страниц."""
     response = client_fixture.get(url)
-
     assert response.status_code == expected_status
 
-    # Если ожидается редирект, проверяем куда ведёт
-    if expected_redirect:
-        assert response.url == expected_redirect
+
+@pytest.mark.parametrize(
+    "url, client_fixture, expected_redirect",
+    [
+        (EDIT_URL, CLIENT_FIXTURE, EDIT_REDIRECT_URL),
+        (DELETE_URL, CLIENT_FIXTURE, DELETE_REDIRECT_URL),
+    ],
+)
+def test_redirects(url, client_fixture, expected_redirect):
+    """Тест для проверки корректности редиректов."""
+    response = client_fixture.get(url)
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.url == expected_redirect
