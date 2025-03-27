@@ -1,5 +1,5 @@
 from .base import BaseTestCase
-from .urls import LIST_URL, ADD_URL
+from .base import LIST_URL, ADD_URL, AUTHOR_EDIT_URL
 from notes.forms import NoteForm
 
 
@@ -11,7 +11,7 @@ class NoteContentTests(BaseTestCase):
         response = self.author_client.get(LIST_URL)
         notes = response.context["object_list"]
 
-        self.assertIn(self.author_note, notes)
+        self.assertIn(self.note_by_author, notes)
 
         for note in notes:
             self.assertEqual(note.author, self.author)
@@ -21,7 +21,7 @@ class NoteContentTests(BaseTestCase):
 
     def test_create_edit_pages_have_correct_forms(self):
         """На страницах создания и редактирования есть форма NoteForm."""
-        for url in [ADD_URL, self.author_edit_url]:
+        for url in [ADD_URL, AUTHOR_EDIT_URL]:
             with self.subTest(url=url):
                 response = self.author_client.get(url)
                 self.assertIn("form", response.context)

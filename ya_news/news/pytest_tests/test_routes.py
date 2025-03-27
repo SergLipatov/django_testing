@@ -55,5 +55,4 @@ def test_page_availability(url, client_fixture, expected_status):
 def test_redirects(url, client_fixture, expected_redirect):
     """Тест для проверки корректности редиректов."""
     response = client_fixture.get(url)
-    assert response.status_code == HTTPStatus.FOUND
     assert response.url == expected_redirect

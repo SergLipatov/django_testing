@@ -2,10 +2,34 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from .urls import get_redirect_url
 from notes.models import Note
 
 User = get_user_model()
+
+HOME_URL = reverse("notes:home")
+ADD_URL = reverse("notes:add")
+SUCCESS_URL = reverse("notes:success")
+LIST_URL = reverse("notes:list")
+LOGIN_URL = reverse("users:login")
+LOGOUT_URL = reverse("users:logout")
+SIGNUP_URL = reverse("users:signup")
+AUTHOR_EDIT_URL = reverse("notes:edit", args=["author-note"])
+AUTHOR_DELETE_URL = reverse("notes:delete", args=["author-note"])
+AUTHOR_DETAIL_URL = reverse("notes:detail", args=["author-note"])
+READER_EDIT_URL = reverse("notes:edit", args=["reader-note"])
+READER_DELETE_URL = reverse("notes:delete", args=["reader-note"])
+
+
+def get_redirect_url(destination_url):
+    return f"{LOGIN_URL}?next={destination_url}"
+
+
+REDIRECT_ADD_URL = get_redirect_url(ADD_URL)
+REDIRECT_LIST_URL = get_redirect_url(LIST_URL)
+REDIRECT_SUCCESS_URL = get_redirect_url(SUCCESS_URL)
+REDIRECT_AUTHOR_EDIT_URL = get_redirect_url(AUTHOR_EDIT_URL)
+REDIRECT_AUTHOR_DELETE_URL = get_redirect_url(AUTHOR_DELETE_URL)
+REDIRECT_AUTHOR_DETAIL_URL = get_redirect_url(AUTHOR_DETAIL_URL)
 
 
 class BaseTestCase(TestCase):
@@ -15,46 +39,33 @@ class BaseTestCase(TestCase):
     def setUpTestData(cls):
         """Создаёт пользователей один раз на весь класс (экономит ресурсы)."""
         cls.author = User.objects.create(username="author")
+        cls.reader = User.objects.create(username="reader")
+        cls.author_client = cls.client_class()
+        cls.author_client.force_login(cls.author)
+        cls.reader_client = cls.client_class()
+        cls.reader_client.force_login(cls.reader)
 
-    def setUp(self):
-        """Создаёт тестовые данные перед каждым тестом."""
-        self.author_client = self.client_class()
-        self.author_client.force_login(self.author)
-        self.anonymous_client = self.client_class()
-
-        self.author_note = Note.objects.create(
+        cls.note_by_author = Note.objects.create(
             title="Заметка автора",
             text="Текст 1",
-            author=self.author,
+            author=cls.author,
             slug="author-note"
         )
 
-        self.author_edit_url = reverse(
-            "notes:edit",
-            args=[self.author_note.slug]
-        )
-        self.author_delete_url = reverse(
-            "notes:delete",
-            args=[self.author_note.slug]
-        )
-        self.author_detail_url = reverse(
-            "notes:detail",
-            args=[self.author_note.slug]
+        cls.note_by_reader = Note.objects.create(
+            title="Заметка читателя",
+            text="Текст 2",
+            author=cls.reader,
+            slug="reader-note"
         )
 
-        self.redirect_author_edit_url = get_redirect_url(self.author_edit_url)
-        self.redirect_author_delete_url = get_redirect_url(
-            self.author_delete_url)
-        self.redirect_author_detail_url = get_redirect_url(
-            self.author_detail_url)
-
-        self.new_note_data = {
+        cls.new_note_data = {
             "title": "Новая заметка",
             "text": "Какой-то текст",
             "slug": "new-note",
         }
 
-        self.edit_note_data = {
+        cls.edit_note_data = {
             "title": "Обновлённая заметка",
             "text": "Обновлённый текст",
         }

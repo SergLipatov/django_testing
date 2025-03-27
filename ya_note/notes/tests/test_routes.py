@@ -1,9 +1,12 @@
 from http import HTTPStatus
 
 from .base import BaseTestCase
-from .urls import (
+from .base import (
     LIST_URL, ADD_URL, SUCCESS_URL, LOGIN_URL, SIGNUP_URL, LOGOUT_URL,
-    REDIRECT_ADD_URL, REDIRECT_LIST_URL, REDIRECT_SUCCESS_URL
+    REDIRECT_ADD_URL, REDIRECT_LIST_URL, REDIRECT_SUCCESS_URL,
+    AUTHOR_DELETE_URL, AUTHOR_EDIT_URL, ADD_URL, SUCCESS_URL,
+    REDIRECT_AUTHOR_EDIT_URL, REDIRECT_AUTHOR_DELETE_URL,
+    AUTHOR_DETAIL_URL, REDIRECT_AUTHOR_DETAIL_URL
 )
 
 
@@ -12,19 +15,19 @@ class TestRoutes(BaseTestCase):
 
     def test_redirect_for_anonymous_users(self):
         """Анонимные пользователи перенаправляются на логин."""
-        protected_urls = {
+        cases = {
             ADD_URL: REDIRECT_ADD_URL,
             LIST_URL: REDIRECT_LIST_URL,
             SUCCESS_URL: REDIRECT_SUCCESS_URL,
-            self.author_edit_url: self.redirect_author_edit_url,
-            self.author_delete_url: self.redirect_author_delete_url,
-            self.author_detail_url: self.redirect_author_detail_url,
+            AUTHOR_EDIT_URL: REDIRECT_AUTHOR_EDIT_URL,
+            AUTHOR_DELETE_URL: REDIRECT_AUTHOR_DELETE_URL,
+            AUTHOR_DETAIL_URL: REDIRECT_AUTHOR_DETAIL_URL,
         }
 
-        for url, expected_redirect in protected_urls.items():
+        for url, expected_redirect in cases.items():
             with self.subTest(url=url):
                 self.assertRedirects(
-                    self.anonymous_client.get(url),
+                    self.client.get(url),
                     expected_redirect
                 )
 
@@ -33,5 +36,7 @@ class TestRoutes(BaseTestCase):
         urls = [SIGNUP_URL, LOGIN_URL, LOGOUT_URL]
         for url in urls:
             with self.subTest(url=url):
-                response = self.anonymous_client.get(url)
-                self.assertEqual(response.status_code, HTTPStatus.OK)
+                self.assertEqual(
+                    self.client.get(url).status_code,
+                    HTTPStatus.OK
+                )
