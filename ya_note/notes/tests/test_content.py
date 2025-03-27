@@ -20,7 +20,6 @@ class NoteContentTests(BaseTestCase):
         self.assertEqual(note.slug, self.note_by_author.slug)
         self.assertEqual(note.author, self.note_by_author.author)
 
-
     def test_create_edit_pages_have_correct_forms(self):
         """На страницах создания и редактирования есть форма NoteForm."""
         for url in [ADD_URL, AUTHOR_EDIT_URL]:

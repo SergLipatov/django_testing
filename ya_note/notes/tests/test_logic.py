@@ -2,7 +2,7 @@ from http import HTTPStatus
 from pytils.translit import slugify
 
 from .base import BaseTestCase
-from .base import (ADD_URL, SUCCESS_URL,  AUTHOR_EDIT_URL,
+from .base import (ADD_URL, SUCCESS_URL, AUTHOR_EDIT_URL,
                    AUTHOR_DELETE_URL)
 from notes.models import Note
 

@@ -64,4 +64,3 @@ class BaseTestCase(TestCase):
             "text": "Какой-то текст",
             "slug": "new-note",
         }
-
