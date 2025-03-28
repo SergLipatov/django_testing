@@ -45,7 +45,6 @@ class NoteCRUDTests(BaseTestCase):
         )
         self.assertEqual(Note.objects.count(), initial_count)
 
-
     def test_author_can_delete_note(self):
         """Автор может удалить свою заметку."""
         note_id = self.note_by_author.id
