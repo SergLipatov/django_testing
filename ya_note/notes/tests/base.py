@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.urls import reverse
 
 from notes.models import Note
@@ -18,6 +18,7 @@ AUTHOR_DELETE_URL = reverse("notes:delete", args=["author-note"])
 AUTHOR_DETAIL_URL = reverse("notes:detail", args=["author-note"])
 READER_EDIT_URL = reverse("notes:edit", args=["reader-note"])
 READER_DELETE_URL = reverse("notes:delete", args=["reader-note"])
+READER_DETAIL_URL = reverse("notes:detail", args=["reader-note"])
 
 
 def get_redirect_url(destination_url):
@@ -64,4 +65,5 @@ class BaseTestCase(TestCase):
             "text": "Какой-то текст",
             "slug": "new-note",
         }
+
 
