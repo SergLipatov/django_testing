@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
 
 from notes.models import Note
@@ -65,5 +65,3 @@ class BaseTestCase(TestCase):
             "text": "Какой-то текст",
             "slug": "new-note",
         }
-
-

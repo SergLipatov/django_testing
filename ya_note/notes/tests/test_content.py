@@ -25,7 +25,6 @@ class NoteContentTests(BaseTestCase):
         self.assertNotIn(self.note_by_reader, notes)
         self.assertIn(self.note_by_author, notes)
 
-
     def test_create_edit_pages_have_correct_forms(self):
         """На страницах создания и редактирования есть форма NoteForm."""
         for url in [ADD_URL, AUTHOR_EDIT_URL]:
