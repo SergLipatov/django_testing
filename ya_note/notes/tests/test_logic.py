@@ -3,7 +3,7 @@ from http import HTTPStatus
 from pytils.translit import slugify
 
 from .base import BaseTestCase
-from .base import (ADD_URL, SUCCESS_URL, AUTHOR_EDIT_URL,
+from .base import (ADD_URL, SUCCESS_URL,  AUTHOR_EDIT_URL,
                    AUTHOR_DELETE_URL)
 from notes.models import Note
 
@@ -44,6 +44,7 @@ class NoteCRUDTests(BaseTestCase):
             response.status_code, HTTPStatus.OK,
         )
         self.assertEqual(Note.objects.count(), initial_count)
+
 
     def test_author_can_delete_note(self):
         """Автор может удалить свою заметку."""
