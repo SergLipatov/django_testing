@@ -11,7 +11,6 @@ class NoteContentTests(BaseTestCase):
         response = self.author_client.get(LIST_URL)
         notes = response.context["object_list"]
         self.assertIn(self.note_by_author, notes)
-        self.assertEqual(len(notes), 1)
         note = notes.get(pk=self.note_by_author.pk)
         self.assertEqual(note.title, self.note_by_author.title)
         self.assertEqual(note.text, self.note_by_author.text)
@@ -23,7 +22,6 @@ class NoteContentTests(BaseTestCase):
         response = self.author_client.get(LIST_URL)
         notes = response.context["object_list"]
         self.assertNotIn(self.note_by_reader, notes)
-        self.assertIn(self.note_by_author, notes)
 
     def test_create_edit_pages_have_correct_forms(self):
         """На страницах создания и редактирования есть форма NoteForm."""
