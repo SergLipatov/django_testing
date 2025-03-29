@@ -41,7 +41,7 @@ class NoteCRUDTests(BaseTestCase):
         initial_ids = set(Note.objects.values_list("id", flat=True))
         response = self.client.post(ADD_URL, self.form_data)
         self.assertNotEqual(response.status_code, HTTPStatus.OK)
-        self.assertSetEqual(set(
+        self.assertEqual(set(
             Note.objects.values_list("id", flat=True)), initial_ids)
 
     def test_author_can_delete_note(self):
