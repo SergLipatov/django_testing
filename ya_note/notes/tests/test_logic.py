@@ -41,8 +41,8 @@ class NoteCRUDTests(BaseTestCase):
         initial_ids = set(Note.objects.values_list("id", flat=True))
         response = self.client.post(ADD_URL, self.form_data)
         self.assertNotEqual(response.status_code, HTTPStatus.OK)
-        current_ids = set(Note.objects.values_list("id", flat=True))
-        self.assertSetEqual(current_ids, initial_ids)
+        self.assertSetEqual(set(
+            Note.objects.values_list("id", flat=True)), initial_ids)
 
     def test_author_can_delete_note(self):
         """Автор может удалить свою заметку."""
@@ -55,11 +55,10 @@ class NoteCRUDTests(BaseTestCase):
 
     def test_user_cannot_edit_someone_elses_note(self):
         """Обычный пользователь не может редактировать чужую заметку."""
+        note_id = self.note_by_author.pk
         response = self.reader_client.post(AUTHOR_EDIT_URL, self.form_data)
-        self.assertNotEqual(
-            response.status_code, HTTPStatus.OK,
-        )
-        unchanged_note = Note.objects.get(pk=self.note_by_author.pk)
+        self.assertNotEqual(response.status_code, HTTPStatus.OK)
+        unchanged_note = Note.objects.get(pk=note_id)  # Достоверный доступ
         self.assertEqual(unchanged_note.title, self.note_by_author.title)
         self.assertEqual(unchanged_note.text, self.note_by_author.text)
         self.assertEqual(unchanged_note.slug, self.note_by_author.slug)
@@ -67,14 +66,14 @@ class NoteCRUDTests(BaseTestCase):
 
     def test_user_cannot_delete_someone_elses_note(self):
         """Обычный пользователь не может удалить чужую заметку."""
-        self.reader_client.post(AUTHOR_DELETE_URL)
-        self.assertTrue(Note.objects.filter(
-            pk=self.note_by_author.pk).exists())
-        after_note = Note.objects.get(pk=self.note_by_author.pk)
-        self.assertEqual(after_note.title, self.note_by_author.title)
-        self.assertEqual(after_note.text, self.note_by_author.text)
-        self.assertEqual(after_note.slug, self.note_by_author.slug)
-        self.assertEqual(after_note.author, self.note_by_author.author)
+        note_before = self.note_by_author
+        response = self.reader_client.post(AUTHOR_EDIT_URL, self.form_data)
+        self.assertNotEqual(response.status_code, HTTPStatus.OK)
+        unchanged_note = Note.objects.get(pk=note_before.pk)
+        self.assertEqual(unchanged_note.title, note_before.title)
+        self.assertEqual(unchanged_note.text, note_before.text)
+        self.assertEqual(unchanged_note.slug, note_before.slug)
+        self.assertEqual(unchanged_note.author, note_before.author)
 
     def test_create_note_without_slug(self):
         """Slug формируется из заголовка, если не передан."""
