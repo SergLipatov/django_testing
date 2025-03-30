@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from pytils.translit import slugify
 
-from .base import BaseTestCase
+from .base import BaseTestCase, REDIRECT_ADD_URL
 from .base import (ADD_URL, SUCCESS_URL, AUTHOR_EDIT_URL,
                    AUTHOR_DELETE_URL)
 from notes.models import Note
@@ -40,7 +40,7 @@ class NoteCRUDTests(BaseTestCase):
         """Анонимный пользователь не может создать заметку."""
         initial_ids = set(Note.objects.values_list("id", flat=True))
         response = self.client.post(ADD_URL, self.form_data)
-        self.assertNotEqual(response.status_code, HTTPStatus.OK)
+        self.assertRedirects(response, REDIRECT_ADD_URL)
         self.assertEqual(set(
             Note.objects.values_list("id", flat=True)), initial_ids)
 
@@ -55,10 +55,9 @@ class NoteCRUDTests(BaseTestCase):
 
     def test_user_cannot_edit_someone_elses_note(self):
         """Обычный пользователь не может редактировать чужую заметку."""
-        note_id = self.note_by_author.pk
         response = self.reader_client.post(AUTHOR_EDIT_URL, self.form_data)
-        self.assertNotEqual(response.status_code, HTTPStatus.OK)
-        unchanged_note = Note.objects.get(pk=note_id)  # Достоверный доступ
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        unchanged_note = Note.objects.get(pk=self.note_by_author.pk)
         self.assertEqual(unchanged_note.title, self.note_by_author.title)
         self.assertEqual(unchanged_note.text, self.note_by_author.text)
         self.assertEqual(unchanged_note.slug, self.note_by_author.slug)
@@ -66,14 +65,13 @@ class NoteCRUDTests(BaseTestCase):
 
     def test_user_cannot_delete_someone_elses_note(self):
         """Обычный пользователь не может удалить чужую заметку."""
-        note_before = self.note_by_author
         response = self.reader_client.post(AUTHOR_EDIT_URL, self.form_data)
         self.assertNotEqual(response.status_code, HTTPStatus.OK)
-        unchanged_note = Note.objects.get(pk=note_before.pk)
-        self.assertEqual(unchanged_note.title, note_before.title)
-        self.assertEqual(unchanged_note.text, note_before.text)
-        self.assertEqual(unchanged_note.slug, note_before.slug)
-        self.assertEqual(unchanged_note.author, note_before.author)
+        unchanged_note = Note.objects.get(pk=self.note_by_author.pk)
+        self.assertEqual(unchanged_note.title, self.note_by_author.title)
+        self.assertEqual(unchanged_note.text, self.note_by_author.text)
+        self.assertEqual(unchanged_note.slug, self.note_by_author.slug)
+        self.assertEqual(unchanged_note.author, self.note_by_author.author)
 
     def test_create_note_without_slug(self):
         """Slug формируется из заголовка, если не передан."""
